@@ -1,0 +1,34 @@
+enheng:
+  server:
+    private-key: MIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAIHEMWBdZtRj502gUlOeVHNGysnLFZ1opZkE2d5ji/pIsWvojxOJWba9P0o02hQBfeLcCxPQFARwTqa4EE8diUTT1UfN7XhAWlasZgPHej4wLXjqbLE9GMn7vgNzG8bgQQyaN0KkGjkYzUF+c6w8NXkLLfii1HdAFfJsDrMdSpavAgMBAAECgYALdODPGy/q7G8NYWwjScU28DcTHcTowsZr/gumIK/JBwXy+vM2zFeJVKfzyzq9rWwJzVeFBkfeJHQtL+7wrTDjLAx+gAUvDWRHPP5zVrH6EFSl/i0SmsQVNHwyZ28uixFJ1ngG213O+/47qtqCJ/ppoVNCY9oJ9Hpfrk3poOuHsQJBANjtYg8e23r/oRglgmGSM54c3FRWNS5Ki+dprlzQDbTDnaTlR4qS2lhj1pL4vmUoDS71VREqyxczeQQLMyPD2O0CQQCZI8fQKj1xOwCP112CV4EiAXc1DmXEAGrUd2xgSpLucI/5wC4Ys/QKxw31NMz9Ko07fCtDPf1IG12t2Y8Rz0aLAkEAo8gu1i29FpO0xG9ljld9Q26U59Qi2O2Nzc3byNWI06cx+hLmPfj8g+n1UwgdcHCZ649th8WgisbhIq12EhXHTQJBAJAeKDEzT1d8W28DEzFTAGfsUS9ROVxXuDHzob6M7/INZLF5tufwkr6BzhTxd+jZXsiYdm51rCNr/aFamVX9ZzkCQQCM9RYM6XPKYUqdhqOtGaUpPGtNiAuGscIG4qP5IAMAAoWt98I/UR7iCdoRzEhPJQ5FfCLm/OuJtmUx1NxormXD
+    port: 7000
+    io-write-timeout: 10s
+    idl-write-timeout: 60s
+    idl-read-timeout: 60s
+http:
+  server:
+    port: 7001
+
+spring:
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    #    password:
+    timeout: 5s
+    lettuce:
+      pool:
+        enabled: true
+        max-wait: 3000ms
+        min-idle: 1
+        max-idle: 2
+        max-active: 10
+
+
+log:
+  home: /Users/suyiyi/logs/enheng
+  level: info
+logging:
+  config: classpath:logback-config.xml
+
+
