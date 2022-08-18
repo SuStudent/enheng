@@ -18,7 +18,7 @@ enheng.client.app-key 为eheng-server部署者提供
 >>  可将enheng.client.remote-host 改为“106.14.252.68” 进行测试
 ```
 
-6. java -jar enheng-client-1.0.0.jar --subdomain=xxxxx --port=31001 --host=10.15.47.219
+6. java -jar enheng-client-1.0.0.jar --subdomain=xxxxx --port=31001
 
 ```
 subdomain 为子域名。host为要代理的IP，(为空时去本地) port为要代理的端口
