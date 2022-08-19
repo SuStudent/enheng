@@ -75,6 +75,7 @@ public class ProxyWork implements Runnable {
         error(e);
         return;
       }
+      stopWatch.stop();
       log.info("proxy：appKey={}, subdomain={}, uri={}, status={}, {}ms", connection.getAppKey(), connection.getSubdomain(), finalHttpReq.getUri(),
           resp.getStatus(), stopWatch.getTotalTimeMillis());
       success(resp);
