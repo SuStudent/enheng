@@ -4,6 +4,7 @@ import cn.susudad.enheng.common.protocol.EnhengPromise;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -19,6 +20,10 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import java.io.IOException;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 
@@ -34,30 +39,12 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 @Slf4j
 public class HttpClient {
 
-  private Bootstrap bootstrap;
-  private EventLoopGroup workerGroup;
+  private static Bootstrap bootstrap = new Bootstrap();
+  private static EventLoopGroup workerGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors(),
+      new CustomizableThreadFactory("client-work"));
+  ;
 
-  private Channel channel;
-
-  private String host;
-
-  private int port;
-
-  private HttpClient(String host, int port) {
-    this.host = host;
-    this.port = port;
-  }
-
-  public static HttpClient createClient(String host, int port) throws InterruptedException {
-    HttpClient httpClient = new HttpClient(host, port);
-    httpClient.init();
-    httpClient.connect();
-    return httpClient;
-  }
-
-  private void init() {
-    bootstrap = new Bootstrap();
-    workerGroup = new NioEventLoopGroup(1, new CustomizableThreadFactory("client-work"));
+  static {
     bootstrap.group(workerGroup)
         .channel(NioSocketChannel.class)
         .option(ChannelOption.SO_KEEPALIVE, true)
@@ -73,9 +60,42 @@ public class HttpClient {
         });
   }
 
-  private void connect() throws InterruptedException {
-    ChannelFuture future = bootstrap.connect(host, port).sync();
-    channel = future.channel();
+  private Channel channel;
+
+  private final String host;
+
+  private final int port;
+
+  private HttpClient(String host, int port) {
+    this.host = host;
+    this.port = port;
+  }
+
+  public static HttpClient createClient(String host, int port) throws InterruptedException, ExecutionException, TimeoutException {
+    HttpClient httpClient = new HttpClient(host, port);
+    CompletableFuture<Channel> future = new CompletableFuture<>();
+    httpClient.connect(future);
+    try {
+      httpClient.channel = future.get(5, TimeUnit.SECONDS);
+    } catch (ExecutionException | TimeoutException e) {
+      if (!future.isDone()) {
+        future.cancel(true);
+      }
+      log.error("", e);
+      throw e;
+    }
+    return httpClient;
+  }
+
+  private void connect(CompletableFuture<Channel> future) throws InterruptedException {
+    ChannelFuture channelFuture = bootstrap.connect(host, port).sync();
+    channelFuture.addListener((ChannelFutureListener) cf -> {
+      if (cf.isSuccess()) {
+        future.complete(cf.channel());
+      } else {
+        future.completeExceptionally(cf.cause());
+      }
+    });
   }
 
   private void requiredHeader(FullHttpRequest request) {
@@ -97,14 +117,7 @@ public class HttpClient {
     }
   }
 
-  public EnhengPromise<FullHttpResponse> request(FullHttpRequest request) throws InterruptedException {
-    if (channel == null || !channel.isOpen() || !channel.isActive()) {
-      synchronized (this) {
-        if (channel == null || !channel.isOpen() || !channel.isActive()) {
-          connect();
-        }
-      }
-    }
+  public EnhengPromise<FullHttpResponse> request(FullHttpRequest request) {
     EnhengPromise<FullHttpResponse> promise = new EnhengPromise<>(10);
     requiredHeader(request);
     ReqInfo reqInfo = new ReqInfo(request, promise);
@@ -118,23 +131,14 @@ public class HttpClient {
       if (infos.size() > 0) {
         log.warn("http client close, REQ_QUEUE is not empty. size: {}", infos.size());
       }
-      for (ReqInfo info : infos) {
-        try {
-          info.getPromise().await();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
     }
-    if (channel != null && channel.isOpen()) {
+    if (channel != null) {
+      log.debug("{} 关闭连接。", channel);
       channel.close();
-    }
-    if (workerGroup != null) {
-      workerGroup.shutdownGracefully();
     }
   }
 
   public boolean isActive() {
-    return channel != null && channel.isOpen() && channel.isActive();
+    return channel != null && channel.isOpen() && channel.isActive() && channel.isWritable();
   }
 }

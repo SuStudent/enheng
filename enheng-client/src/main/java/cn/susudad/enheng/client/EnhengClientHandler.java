@@ -65,7 +65,11 @@ public class EnhengClientHandler extends AbstractHandler<EnhengMessage> {
         }
         HttpResp httpResp = HttpResp.convert(response);
         stopWatch.stop();
-        log.info("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
+        if (response.status().code() != 200) {
+          log.warn("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
+        } else {
+          log.info("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
+        }
         EnhengMessage respMessage = MessageUtils.buildRespMessage(enhengMessage, MsgTypeEnum.SERVICE_RESP, httpResp);
         ctx.writeAndFlush(respMessage);
       });
