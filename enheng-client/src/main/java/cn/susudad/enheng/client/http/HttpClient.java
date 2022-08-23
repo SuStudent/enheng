@@ -71,31 +71,27 @@ public class HttpClient {
     this.port = port;
   }
 
-  public static HttpClient createClient(String host, int port) throws InterruptedException, ExecutionException, TimeoutException {
+  public static HttpClient createClient(String host, int port) throws InterruptedException {
     HttpClient httpClient = new HttpClient(host, port);
-    CompletableFuture<Channel> future = new CompletableFuture<>();
-    httpClient.connect(future);
     try {
-      httpClient.channel = future.get(5, TimeUnit.SECONDS);
-    } catch (ExecutionException | TimeoutException e) {
-      if (!future.isDone()) {
-        future.cancel(true);
-      }
+      httpClient.connect();
+    } catch (InterruptedException e) {
       log.error("", e);
       throw e;
     }
     return httpClient;
   }
 
-  private void connect(CompletableFuture<Channel> future) throws InterruptedException {
+  private void connect() throws InterruptedException {
     ChannelFuture channelFuture = bootstrap.connect(host, port).sync();
-    channelFuture.addListener((ChannelFutureListener) cf -> {
-      if (cf.isSuccess()) {
-        future.complete(cf.channel());
-      } else {
-        future.completeExceptionally(cf.cause());
-      }
-    });
+    try {
+      channelFuture.await(5, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      channelFuture.cancel(true);
+      throw e;
+    }
+
+    this.channel = channelFuture.channel();
   }
 
   private void requiredHeader(FullHttpRequest request) {

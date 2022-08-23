@@ -59,7 +59,7 @@ public class ProxyWork implements Runnable {
     }
     DomainConnection connection = DomainManager.get(subdomain);
     if (connection == null) {
-      log.info("not register，subdomain={}", subdomain);
+      log.info("not register，subdomain={}, remote={}", subdomain, ctx.channel().remoteAddress().toString());
       notFound(ctx, request);
       return;
     }
@@ -76,7 +76,8 @@ public class ProxyWork implements Runnable {
         return;
       }
       stopWatch.stop();
-      log.info("proxy：appKey={}, subdomain={}, uri={}, status={}, {}ms", connection.getAppKey(), connection.getSubdomain(), finalHttpReq.getUri(),
+      log.info("proxy：remote={}, appKey={}, subdomain={}, uri={}, status={}, {}ms", ctx.channel().remoteAddress().toString(), connection.getAppKey(),
+          connection.getSubdomain(), finalHttpReq.getUri(),
           resp.getStatus(), stopWatch.getTotalTimeMillis());
       success(resp);
     });

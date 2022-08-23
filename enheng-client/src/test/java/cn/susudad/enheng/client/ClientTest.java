@@ -16,8 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,33 @@ public class ClientTest {
   private EnhengProxy enhengProxy;
 
 
+  @Test
+  public void test() throws Exception {
+    CountDownLatch d = new CountDownLatch(1);
+    HttpClient client = null;
+    try {
+      client = HttpClient.createClient("10.15.108.95", 10003);
+      EnhengPromise<FullHttpResponse> request = client.request(req());
+      HttpClient finalClient = client;
+      request.onComplete((resp,e) -> {
+        if (resp != null && resp.status().code() == 200) {
+          System.out.println(resp.content().toString(StandardCharsets.UTF_8));
+        }
+        if (e != null) {
+          e.printStackTrace();
+        }
+        d.countDown();
+        try {
+          finalClient.close();
+        } catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      });
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    d.await();
+  }
   @Test
   public void test2() throws InterruptedException {
     int num = 10000;
