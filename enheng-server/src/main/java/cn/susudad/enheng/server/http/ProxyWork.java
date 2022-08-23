@@ -37,9 +37,13 @@ public class ProxyWork implements Runnable {
 
   private final FullHttpRequest request;
 
+  private String remoteIp;
+
   public ProxyWork(ChannelHandlerContext ctx, FullHttpRequest request) {
     this.ctx = ctx;
     this.request = request;
+    String ip = request.headers().get("X-Real-IP");
+    this.remoteIp = StringUtils.isBlank(ip) ? ctx.channel().remoteAddress().toString() : ip;
   }
 
   @Override
@@ -59,7 +63,7 @@ public class ProxyWork implements Runnable {
     }
     DomainConnection connection = DomainManager.get(subdomain);
     if (connection == null) {
-      log.info("not register，subdomain={}, remote={}", subdomain, ctx.channel().remoteAddress().toString());
+      log.info("not register，subdomain={}, remote={}", subdomain, remoteIp);
       notFound(ctx, request);
       return;
     }
@@ -76,7 +80,7 @@ public class ProxyWork implements Runnable {
         return;
       }
       stopWatch.stop();
-      log.info("proxy：remote={}, appKey={}, subdomain={}, uri={}, status={}, {}ms", ctx.channel().remoteAddress().toString(), connection.getAppKey(),
+      log.info("proxy：remote={}, appKey={}, subdomain={}, uri={}, status={}, {}ms", remoteIp, connection.getAppKey(),
           connection.getSubdomain(), finalHttpReq.getUri(),
           resp.getStatus(), stopWatch.getTotalTimeMillis());
       success(resp);
