@@ -1,9 +1,11 @@
 package cn.susudad.enheng.common.protocol;
 
 import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
@@ -20,10 +22,11 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 public class EnhengPromise<T> extends CompletableFuture<T> {
 
   private final static HashedWheelTimer TIMER = new HashedWheelTimer(new CustomizableThreadFactory("promise-monitor-"),
-      1, TimeUnit.SECONDS, 60);
+      1, TimeUnit.SECONDS, 60, true, -1, Executors.newFixedThreadPool(4,new CustomizableThreadFactory("promise-monitor-execute-")));
 
   private final Promise<T> promise = ImmediateEventExecutor.INSTANCE.newPromise();
 
+  private Timeout timeout;
 
   /**
    * @param timeoutSeconds 超时设置，小于0 永不超时。默认10秒
@@ -33,7 +36,7 @@ public class EnhengPromise<T> extends CompletableFuture<T> {
       timeoutSeconds = 10;
     }
     if (timeoutSeconds > 0) {
-      TIMER.newTimeout(timeout -> {
+      this.timeout = TIMER.newTimeout(t -> {
         if (!this.isDone()) {
           this.tryFailure(new TimeoutException("EnhengPromise timeout."));
         }
@@ -58,6 +61,7 @@ public class EnhengPromise<T> extends CompletableFuture<T> {
   public boolean trySuccess(T result) {
     if (promise.trySuccess(result)) {
       complete(result);
+      timeout.cancel();
       return true;
     }
     return false;
@@ -69,6 +73,7 @@ public class EnhengPromise<T> extends CompletableFuture<T> {
 
   public boolean tryFailure(Throwable cause) {
     if (promise.tryFailure(cause)) {
+      timeout.cancel();
       completeExceptionally(cause);
       return true;
     }
@@ -90,6 +95,7 @@ public class EnhengPromise<T> extends CompletableFuture<T> {
 
   public boolean cancel(boolean mayInterruptIfRunning) {
     if (promise.cancel(mayInterruptIfRunning)) {
+      timeout.cancel();
       return super.cancel(mayInterruptIfRunning);
     }
     return false;
