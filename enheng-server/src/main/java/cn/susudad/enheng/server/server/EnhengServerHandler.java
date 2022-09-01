@@ -21,9 +21,13 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 
 /**
  * @author yiyi.su
@@ -36,9 +40,27 @@ public class EnhengServerHandler extends AbstractHandler<EnhengMessage> {
 
   private ChannelPromise loginPromise;
 
+  private static final ExecutorService executor = new ThreadPoolExecutor(
+      4,
+      12,
+      60L,
+      TimeUnit.SECONDS,
+      new LinkedBlockingQueue<>(),
+      new CustomizableThreadFactory("enehng-proxy-worker-"),
+      (r, executor) -> {
+        try {
+          log.warn("rejected task:{}", executor.getQueue().size());
+          executor.getQueue().put(r);
+        } catch (InterruptedException e) {
+          log.error("rejected error", e);
+        }
+      }
+  );
+
   public static final AttributeKey<String> DOMAIN_KEY = AttributeKey.valueOf(String.class, "SUBDOMAIN");
 
   public static final AttributeKey<ConcurrentHashMap<Long, EnhengPromise<HttpResp>>> SERVICE_MAP = AttributeKey.valueOf("SERVICE_MAP");
+
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -90,12 +112,14 @@ public class EnhengServerHandler extends AbstractHandler<EnhengMessage> {
   }
 
   private void handleService(ChannelHandlerContext ctx, EnhengMessage enhengMessage) {
-    ConcurrentHashMap<Long, EnhengPromise<HttpResp>> promiseConcurrentHashMap = ctx.channel().attr(SERVICE_MAP).get();
-    EnhengPromise<HttpResp> promise = promiseConcurrentHashMap.remove(enhengMessage.getHeader().getMsgSeq());
-    if (promise != null) {
-      HttpResp httpResp = SerializedContext.deserialize(enhengMessage, HttpResp.class);
-      promise.trySuccess(httpResp);
-    }
+    executor.submit(() -> {
+      ConcurrentHashMap<Long, EnhengPromise<HttpResp>> promiseConcurrentHashMap = ctx.channel().attr(SERVICE_MAP).get();
+      EnhengPromise<HttpResp> promise = promiseConcurrentHashMap.remove(enhengMessage.getHeader().getMsgSeq());
+      if (promise != null) {
+        HttpResp httpResp = SerializedContext.deserialize(enhengMessage, HttpResp.class);
+        promise.trySuccess(httpResp);
+      }
+    });
   }
 
   private void heartbeat(ChannelHandlerContext ctx, EnhengMessage message) {

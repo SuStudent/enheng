@@ -134,7 +134,7 @@ public final class JsonUtils {
    * @param json json
    * @return hashMap map
    */
-  private static Map<String, String> fromStringMap(final String json) {
+  public static Map<String, String> fromStringMap(final String json) {
     return fromMap(json, String.class);
   }
 

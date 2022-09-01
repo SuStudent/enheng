@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.springframework.data.redis.connection.DataType;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
@@ -18,11 +20,19 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 public class RedisService {
 
   public final HashOp HASH;
+  public final ListOp LIST;
+  public final StringOp STRING;
+  public final SetOp SET;
+  public final SortedSetOp ZSET;
   private final StringRedisTemplate redisTemplate;
 
   public RedisService(StringRedisTemplate redisTemplate) {
     this.redisTemplate = redisTemplate;
     this.HASH = new HashOp(redisTemplate);
+    this.LIST = new ListOp(redisTemplate);
+    this.STRING = new StringOp(redisTemplate);
+    this.SET = new SetOp(redisTemplate);
+    this.ZSET = new SortedSetOp(redisTemplate);
   }
 
   public Boolean del(String key) {
@@ -79,5 +89,9 @@ public class RedisService {
 
   public Cursor<String> scan(ScanOptions options) {
     return redisTemplate.scan(options);
+  }
+
+  public <T> T eval(byte[] script, ReturnType returnType, int numKeys, byte[]... keysAndArgs){
+    return redisTemplate.execute((RedisCallback<T>) connection -> connection.eval(script, returnType, numKeys, keysAndArgs));
   }
 }

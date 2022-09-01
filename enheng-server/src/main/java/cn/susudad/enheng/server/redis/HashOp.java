@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.redis.connection.convert.Converters;
+import org.springframework.data.redis.core.ConvertingCursor;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ScanOptions;
@@ -88,7 +90,40 @@ public class HashOp extends Operation {
     return values.stream().map(str -> deserialize(str, clz)).collect(Collectors.toList());
   }
 
-  public Cursor<Entry<String, String>> scan(String key, ScanOptions scanOptions) {
-    return HASH.scan(key, scanOptions);
+  public <T> Cursor<Entry<String, T>> scan(String key, ScanOptions scanOptions, Class<T> clz) {
+    return new ConvertingCursor<>(HASH.scan(key, scanOptions),
+        (source) -> Converters.entryOf(source.getKey(), this.deserialize(source.getValue(), clz)));
+  }
+
+  public String hRandField(String key) {
+    return HASH.randomKey(key);
+  }
+
+  public List<String> hRandField(String key, long count) {
+    return HASH.randomKeys(key, count);
+  }
+
+  public <T> Entry<String, T> hRandFieldWithValues(String key, Class<T> clz) {
+    Entry<String, String> entry = HASH.randomEntry(key);
+    if (entry == null) {
+      return null;
+    }
+    return Converters.entryOf(entry.getKey(), deserialize(entry.getValue(), clz));
+  }
+
+  public <T> Map<String, T> hRandFieldWithValues(String key, long count, Class<T> clz) {
+    Map<String, String> entries = HASH.randomEntries(key, count);
+    if (entries == null) {
+      return null;
+    }
+    Map<String, T> result = new LinkedHashMap<>(entries.size());
+    entries.forEach((k, v) -> {
+      result.put(k, deserialize(v, clz));
+    });
+    return result;
+  }
+
+  public Long hStrLen(String key, String hashKey) {
+    return HASH.lengthOfValue(key, hashKey);
   }
 }
