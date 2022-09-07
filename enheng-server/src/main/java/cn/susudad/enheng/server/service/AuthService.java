@@ -49,7 +49,7 @@ public class AuthService {
       }
     } catch (Exception e) {
       log.error("验签失败。", e);
-      return LoginResp.builder().success(false).desc("server error.").build();
+      return LoginResp.builder().success(false).desc("login error.").build();
     }
 
     if (client.getExpireDate().before(new Date())) {

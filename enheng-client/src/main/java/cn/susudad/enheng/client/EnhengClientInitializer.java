@@ -28,7 +28,7 @@ public class EnhengClientInitializer extends ChannelInitializer<Channel> {
 //    pipeline.addLast(new LoggingHandler(LogLevel.INFO));
     // WriteTimeoutHandler 其实为写入操作的耗时超时时间，非写入空闲超时时间
     pipeline.addLast(WriteTimeoutHandler.class.getSimpleName(), new WriteTimeoutHandler((int) clientProperties.getIoWriteTimeout().getSeconds()));
-    pipeline.addLast(LengthFieldBasedFrameDecoder.class.getSimpleName(), new LengthFieldBasedFrameDecoder(1024 * 1024, 5, 4, -9, 0));
+    pipeline.addLast(LengthFieldBasedFrameDecoder.class.getSimpleName(), new LengthFieldBasedFrameDecoder(10 * 1024 * 1024, 5, 4, -9, 0));
     pipeline.addLast(EnhengMessageDecode.class.getSimpleName(), new EnhengMessageDecode());
     pipeline.addLast(EnhengMessageEncode.class.getSimpleName(), new EnhengMessageEncode());
     pipeline.addLast(EnhengLoginHandler.class.getSimpleName(), new EnhengLoginHandler(clientProperties));

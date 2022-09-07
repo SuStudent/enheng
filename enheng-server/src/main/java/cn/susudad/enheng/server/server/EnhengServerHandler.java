@@ -79,6 +79,7 @@ public class EnhengServerHandler extends AbstractHandler<EnhengMessage> {
   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
     String subdomain = ctx.channel().attr(DOMAIN_KEY).get();
     if (StringUtils.isNotBlank(subdomain)) {
+      log.info("channel quit。{} register with {}", ctx.channel().remoteAddress(), subdomain);
       DomainManager.remove(subdomain);
     }
 
