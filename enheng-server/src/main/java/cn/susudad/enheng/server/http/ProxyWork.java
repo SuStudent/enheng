@@ -9,6 +9,7 @@ import cn.susudad.enheng.common.protocol.MsgTypeEnum;
 import cn.susudad.enheng.common.utils.MessageUtils;
 import cn.susudad.enheng.server.server.DomainConnection;
 import cn.susudad.enheng.server.service.DomainManager;
+import cn.susudad.enheng.server.utils.IpSearch;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -63,7 +64,7 @@ public class ProxyWork implements Runnable {
     }
     DomainConnection connection = DomainManager.get(subdomain);
     if (connection == null) {
-      log.info("not register，subdomain={}, remote={}", subdomain, remoteIp);
+      log.info("not register, subdomain={}, remote={}, area={}", subdomain, remoteIp, IpSearch.getRegion(remoteIp));
       notFound(ctx, request);
       return;
     }
