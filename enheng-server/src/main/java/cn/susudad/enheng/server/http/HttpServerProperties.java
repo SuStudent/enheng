@@ -20,4 +20,6 @@ public class HttpServerProperties {
   private int coreThreadSize = Runtime.getRuntime().availableProcessors();
 
   private int maxThreadSize = Runtime.getRuntime().availableProcessors() * 2;
+
+  private int proxyTimeoutSecond = 10;
 }

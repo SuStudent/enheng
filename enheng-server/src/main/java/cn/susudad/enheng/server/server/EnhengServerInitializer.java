@@ -30,7 +30,7 @@ public class EnhengServerInitializer extends ChannelInitializer<Channel> {
         new IdleStateHandler((int) serverProperties.getIdlReadTimeout().getSeconds(), (int) serverProperties.getIdlWriteTimeout().getSeconds(), 0));
     // WriteTimeoutHandler 其实为写入操作的耗时超时时间，非写入空闲超时时间
     pipeline.addLast(WriteTimeoutHandler.class.getSimpleName(), new WriteTimeoutHandler((int) serverProperties.getIoWriteTimeout().getSeconds()));
-    pipeline.addLast(LengthFieldBasedFrameDecoder.class.getSimpleName(), new LengthFieldBasedFrameDecoder(10 * 1024 * 1024, 5, 4, -9, 0));
+    pipeline.addLast(LengthFieldBasedFrameDecoder.class.getSimpleName(), new LengthFieldBasedFrameDecoder(serverProperties.getMaxFrameLength(), 5, 4, -9, 0));
     pipeline.addLast(EnhengMessageDecode.class.getSimpleName(), new EnhengMessageDecode());
     pipeline.addLast(EnhengMessageEncode.class.getSimpleName(), new EnhengMessageEncode());
     pipeline.addLast(EnhengServerHandler.class.getSimpleName(), new EnhengServerHandler());

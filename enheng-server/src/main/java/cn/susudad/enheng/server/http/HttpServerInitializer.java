@@ -13,12 +13,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
  */
 public class HttpServerInitializer extends ChannelInitializer<Channel> {
 
-  private HttpServerProperties properties;
-
   private HttpProcessHandler httpProcessHandler;
 
-  public HttpServerInitializer(HttpServerProperties properties, HttpProcessHandler httpProcessHandler) {
-    this.properties = properties;
+  public HttpServerInitializer(HttpProcessHandler httpProcessHandler) {
     this.httpProcessHandler = httpProcessHandler;
   }
 

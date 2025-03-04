@@ -68,13 +68,13 @@ public class HttpServer extends Server {
     bossGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors(), new CustomizableThreadFactory("http-server-boss-"));
     workerGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors() * 2, new CustomizableThreadFactory("http-server-work-"));
 
-    HttpProcessHandler httpProcessHandler = new HttpProcessHandler(properties.getCoreThreadSize(), properties.getMaxThreadSize());
+    HttpProcessHandler httpProcessHandler = new HttpProcessHandler(properties);
 
     bootstrap.group(bossGroup, workerGroup)
         .channel(NioServerSocketChannel.class)
         .option(ChannelOption.SO_BACKLOG, 1024)
         .childOption(ChannelOption.TCP_NODELAY, true)
         .childOption(ChannelOption.SO_KEEPALIVE, true)
-        .childHandler(new HttpServerInitializer(properties, httpProcessHandler));
+        .childHandler(new HttpServerInitializer(httpProcessHandler));
   }
 }

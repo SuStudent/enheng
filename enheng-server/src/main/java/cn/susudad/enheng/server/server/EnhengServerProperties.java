@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 public class EnhengServerProperties {
 
   private int port = 7000;
+  private int maxFrameLength = 10 * 1024 * 1024;
   private Duration ioWriteTimeout = Duration.ofSeconds(10);
   private Duration idlReadTimeout = Duration.ofSeconds(60);
   private Duration idlWriteTimeout = Duration.ofSeconds(60);

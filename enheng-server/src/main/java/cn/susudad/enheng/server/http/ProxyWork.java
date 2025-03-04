@@ -9,6 +9,7 @@ import cn.susudad.enheng.common.protocol.MsgTypeEnum;
 import cn.susudad.enheng.common.utils.MessageUtils;
 import cn.susudad.enheng.server.server.DomainConnection;
 import cn.susudad.enheng.server.service.DomainManager;
+import cn.susudad.enheng.server.utils.ByteFormatUtils;
 import cn.susudad.enheng.server.utils.IpSearch;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -38,11 +39,14 @@ public class ProxyWork implements Runnable {
 
   private final FullHttpRequest request;
 
+  private HttpServerProperties properties;
+
   private String remoteIp;
 
-  public ProxyWork(ChannelHandlerContext ctx, FullHttpRequest request) {
+  public ProxyWork(ChannelHandlerContext ctx, FullHttpRequest request, HttpServerProperties properties) {
     this.ctx = ctx;
     this.request = request;
+    this.properties = properties;
     String ip = request.headers().get("X-Real-IP");
     this.remoteIp = StringUtils.isBlank(ip) ? ctx.channel().remoteAddress().toString() : ip;
   }
@@ -69,21 +73,23 @@ public class ProxyWork implements Runnable {
       return;
     }
     EnhengMessage message = MessageUtils.buildMessage(MsgTypeEnum.SERVICE_REQ, httpReq);
-    EnhengPromise<HttpResp> promise = new EnhengPromise<>(10);
+    EnhengPromise<HttpResp> promise = new EnhengPromise<>(properties.getProxyTimeoutSecond());
     if (!connection.send(message, promise)) {
       error(new ProxyException("发送失败。"));
       return;
     }
     HttpReq finalHttpReq = httpReq;
     promise.onComplete((resp, e) -> {
+	  stopWatch.stop();
       if (e != null) {
         error(e);
+	    log.warn("proxy error：remote={}, appKey={}, subdomain={}, uri={}", remoteIp, connection.getAppKey(),
+			      connection.getSubdomain(), finalHttpReq.getUri(), e);
         return;
       }
-      stopWatch.stop();
-      log.info("proxy：remote={}, appKey={}, subdomain={}, uri={}, status={}, {}ms", remoteIp, connection.getAppKey(),
-          connection.getSubdomain(), finalHttpReq.getUri(),
-          resp.getStatus(), stopWatch.getTotalTimeMillis());
+      log.info("proxy：remote={}, appKey={}, subdomain={}, uri={}, payloadSize={} status={}, {}ms", remoteIp, connection.getAppKey(),
+              connection.getSubdomain(), finalHttpReq.getUri(), ByteFormatUtils.formatBytes(resp.getContent().length),
+              resp.getStatus(), stopWatch.getTotalTimeMillis());
       success(resp);
     });
   }
@@ -94,7 +100,6 @@ public class ProxyWork implements Runnable {
   }
 
   private void error(Throwable e) {
-    log.error("代理异常。", e);
     DefaultFullHttpResponse response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.BAD_GATEWAY);
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
     response.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);

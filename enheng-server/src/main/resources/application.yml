@@ -8,6 +8,7 @@ enheng:
 http:
   server:
     port: 7001
+    proxy-timeout-second: 10
 
 spring:
   redis:

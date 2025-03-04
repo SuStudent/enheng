@@ -1,6 +1,8 @@
 package cn.susudad.enheng.client.config;
 
 import java.util.List;
+
+import lombok.Getter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -19,23 +21,14 @@ public class CommandConfig implements InitializingBean {
   @Autowired
   private ApplicationArguments applicationArguments;
 
+  @Getter
   private String subDomain;
 
+  @Getter
   private int localPort;
 
+  @Getter
   private String host;
-
-  public String getSubDomain() {
-    return subDomain;
-  }
-
-  public int getLocalPort() {
-    return localPort;
-  }
-
-  public String getHost() {
-    return host;
-  }
 
   @Override
   public void afterPropertiesSet() throws Exception {

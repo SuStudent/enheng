@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 
 /**
- * 1、请求完成后不会关闭连接，是否keep-alive 交由服务端控制。 2、在同一个链接中响应是按请求顺序到达，所以存在前一次请求耗时而影响下一次的请求。(Http 管线化 决定。)
+ * 1、请求完成后不会关闭连接，是否keep-alive 交由服务端控制。
+ * 2、在同一个链接中响应是按请求顺序到达，所以存在前一次请求耗时而影响下一次的请求。(Http 管线化 决定。)
  * 3、若想并发请求，可构建多个HttpClient实例来提升性能。HttpClient实例的个数由本机可用的端口数决定。
  *
  * @author yiyi.su
