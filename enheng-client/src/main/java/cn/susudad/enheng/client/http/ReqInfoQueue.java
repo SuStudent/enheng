@@ -2,6 +2,7 @@ package cn.susudad.enheng.client.http;
 
 import cn.susudad.enheng.common.exception.ChannelCloseException;
 import cn.susudad.enheng.common.protocol.EnhengPromise;
+import cn.susudad.enheng.common.utils.ExecutorService;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -11,7 +12,6 @@ import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -47,29 +47,19 @@ public class ReqInfoQueue extends ChannelDuplexHandler {
     super.channelInactive(ctx);
   }
 
-  private final AtomicBoolean lock = new AtomicBoolean();
-
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
     if (msg instanceof ReqInfo) {
-      ReqInfo reqInfo = (ReqInfo) msg;
-      Queue<ReqInfo> queue = ctx.channel().attr(REQ_QUEUE).get();
-      while (true) {
-        if (lock.compareAndSet(false, true)) {
-          try {
-            log.debug("REQ_QUEUE add ");
-            queue.add(reqInfo);
-            ctx.writeAndFlush(reqInfo.getRequest(), promise);
-          } finally {
-            lock.set(false);
-          }
-          break;
-        }
-      }
+      ExecutorService.getInstance().execute(() -> {
+        ReqInfo reqInfo = (ReqInfo) msg;
+        Queue<ReqInfo> queue = ctx.channel().attr(REQ_QUEUE).get();
+        log.debug("REQ_QUEUE add ");
+        queue.add(reqInfo);
+        ctx.writeAndFlush(reqInfo.getRequest(), promise);
+      });
     } else {
       super.write(ctx, msg, promise);
     }
-
   }
 
   @Override

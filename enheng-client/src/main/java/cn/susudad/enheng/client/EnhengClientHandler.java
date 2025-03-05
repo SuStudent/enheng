@@ -7,6 +7,7 @@ import cn.susudad.enheng.common.protocol.AbstractHandler;
 import cn.susudad.enheng.common.protocol.EnhengMessage;
 import cn.susudad.enheng.common.protocol.MsgTypeEnum;
 import cn.susudad.enheng.common.serialize.SerializedContext;
+import cn.susudad.enheng.common.utils.ExecutorService;
 import cn.susudad.enheng.common.utils.MessageUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -55,23 +56,25 @@ public class EnhengClientHandler extends AbstractHandler<EnhengMessage> {
       FullHttpRequest sourceRequest = httpReq.getSourceRequest();
       StopWatch stopWatch = new StopWatch();
       stopWatch.start(sourceRequest.uri());
-      enhengProxy.process(sourceRequest, (resp, error) -> {
-        FullHttpResponse response = resp;
-        if (error != null || resp == null) {
-          log.error("代理异常。", error);
-          response = new DefaultFullHttpResponse(sourceRequest.protocolVersion(), HttpResponseStatus.BAD_GATEWAY);
-          response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
-          response.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);
-        }
-        HttpResp httpResp = HttpResp.convert(response);
-        stopWatch.stop();
-        if (response.status().code() != 200) {
-          log.warn("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
-        } else {
-          log.info("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
-        }
-        EnhengMessage respMessage = MessageUtils.buildRespMessage(enhengMessage, MsgTypeEnum.SERVICE_RESP, httpResp);
-        ctx.writeAndFlush(respMessage);
+      ExecutorService.getInstance().execute(() -> {
+        enhengProxy.process(sourceRequest, (resp, error) -> {
+          FullHttpResponse response = resp;
+          if (error != null || resp == null) {
+            log.error("代理异常。", error);
+            response = new DefaultFullHttpResponse(sourceRequest.protocolVersion(), HttpResponseStatus.BAD_GATEWAY);
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN);
+            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);
+          }
+          HttpResp httpResp = HttpResp.convert(response);
+          stopWatch.stop();
+          if (response.status().code() != 200) {
+            log.warn("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
+          } else {
+            log.info("proxy：uri={}, status={}, {}ms", sourceRequest.uri(), response.status().code(), stopWatch.getTotalTimeMillis());
+          }
+          EnhengMessage respMessage = MessageUtils.buildRespMessage(enhengMessage, MsgTypeEnum.SERVICE_RESP, httpResp);
+          ctx.writeAndFlush(respMessage);
+        });
       });
     }
 

@@ -1,5 +1,6 @@
 package cn.susudad.enheng.client.http;
 
+import cn.susudad.enheng.common.utils.ExecutorService;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -24,6 +25,13 @@ public class HttpDecode extends SimpleChannelInboundHandler<FullHttpResponse> {
       ReferenceCountUtil.release(msg);
       return;
     }
-    reqInfo.getPromise().trySuccess(msg);
+    ReferenceCountUtil.retain(msg);
+    ExecutorService.getInstance().execute(() -> {
+      try {
+        reqInfo.getPromise().trySuccess(msg);
+      }finally {
+        ReferenceCountUtil.release(msg);
+      }
+    });
   }
 }
