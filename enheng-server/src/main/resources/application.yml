@@ -13,9 +13,9 @@ http:
 spring:
   redis:
     database: 0
-    host: 127.0.0.1
-    port: 6379
-    #    password:
+    host: 192.168.1.11
+    port: 16379
+    password: openIM123
     timeout: 5s
     lettuce:
       pool:

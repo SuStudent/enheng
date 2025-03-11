@@ -1,5 +1,6 @@
 package cn.susudad.enheng.common.model;
 
+import java.io.Serializable;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +17,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Heartbeat {
+public class Heartbeat implements Serializable {
+  private static final long serialVersionUID = -4830526091716508958L;
 
   private String appKey;
 

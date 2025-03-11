@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author yiyi.su
  * @version 1.0.0
@@ -15,8 +17,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResp {
+public class LoginResp implements Serializable {
 
+  private static final long serialVersionUID = 2828441869451458167L;
   private boolean success;
 
   private int idlTimeout;

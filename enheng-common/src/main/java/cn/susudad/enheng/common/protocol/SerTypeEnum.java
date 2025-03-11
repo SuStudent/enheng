@@ -1,6 +1,8 @@
 package cn.susudad.enheng.common.protocol;
 
 
+import lombok.Getter;
+
 import java.util.Arrays;
 
 /**
@@ -9,19 +11,16 @@ import java.util.Arrays;
  * @description SerTypeEnum
  * @createTime 2022/8/11
  */
+@Getter
 public enum SerTypeEnum {
   JSON((byte) 1),
   PROTOBUF((byte) 2),
-  hessian((byte) 3);
+  HESSIAN((byte) 3);
 
   private final byte type;
 
   SerTypeEnum(byte b) {
     this.type = b;
-  }
-
-  public byte getType() {
-    return this.type;
   }
 
   public static SerTypeEnum resolve(byte b) {

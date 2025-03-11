@@ -21,6 +21,7 @@ import lombok.Data;
 @Data
 public class HttpReq extends HttpMsg {
 
+  private static final long serialVersionUID = -8768763584460675316L;
   private String method;
   private String uri;
 
@@ -28,9 +29,9 @@ public class HttpReq extends HttpMsg {
     HttpReq httpReq = new HttpReq();
     httpReq.method = request.method().name();
     httpReq.setHttpVersion(request.protocolVersion().text());
-    List<Entry<String, String>> headers = new ArrayList<>();
+    List<HeaderEntry> headers = new ArrayList<>();
     for (Entry<String, String> header : request.headers()) {
-      headers.add(header);
+      headers.add(new HeaderEntry(header.getKey(), header.getValue()));
     }
     httpReq.setHeaders(headers);
     httpReq.uri = request.uri();
@@ -49,7 +50,7 @@ public class HttpReq extends HttpMsg {
     }
     DefaultFullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.valueOf(getHttpVersion()), HttpMethod.valueOf(this.method),
         this.uri, buffer);
-    for (Entry<String, String> header : getHeaders()) {
+    for (HeaderEntry header : getHeaders()) {
       fullHttpRequest.headers().add(header.getKey(), header.getValue());
     }
     return fullHttpRequest;

@@ -5,6 +5,8 @@ import cn.susudad.enheng.common.protocol.EnhengMessage;
 import cn.susudad.enheng.common.protocol.SerTypeEnum;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import cn.susudad.enheng.common.utils.GzipUtils;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,12 +44,12 @@ public class SerializedContext {
 
   public static byte[] serialize(SerTypeEnum serType, Object obj) {
     SerializedStrategy serialized = getSerialized(serType);
-    return serialized.serialize(obj);
+    return GzipUtils.compress(serialized.serialize(obj));
   }
 
-  public static <T> T deserialize(SerTypeEnum serType, byte[] bytes, Class<T> cls) {
+  private static <T> T deserialize(SerTypeEnum serType, byte[] bytes, Class<T> cls) {
     SerializedStrategy serialized = getSerialized(serType);
-    return serialized.deserialize(bytes, cls);
+    return serialized.deserialize(GzipUtils.decompress(bytes), cls);
   }
 
   public static <T> T deserialize(EnhengMessage message, Class<T> cls) {

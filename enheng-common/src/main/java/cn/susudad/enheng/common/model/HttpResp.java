@@ -21,15 +21,16 @@ import lombok.Data;
 @Data
 public class HttpResp extends HttpMsg {
 
+  private static final long serialVersionUID = 6386406350276962914L;
   private int status;
 
   public static HttpResp convert(FullHttpResponse response) {
     HttpResp httpResp = new HttpResp();
     httpResp.status = response.status().code();
     httpResp.setHttpVersion(response.protocolVersion().text());
-    List<Entry<String, String>> headers = new ArrayList<>();
+    List<HeaderEntry> headers = new ArrayList<>();
     for (Entry<String, String> header : response.headers()) {
-      headers.add(header);
+      headers.add(new HeaderEntry(header.getKey(), header.getValue()));
     }
     httpResp.setHeaders(headers);
     byte[] bytes = new byte[response.content().readableBytes()];
@@ -46,7 +47,7 @@ public class HttpResp extends HttpMsg {
       buffer.writeBytes(getContent());
     }
     DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.valueOf(getHttpVersion()), HttpResponseStatus.valueOf(status), buffer);
-    for (Entry<String, String> header : getHeaders()) {
+    for (HeaderEntry header : getHeaders()) {
       response.headers().add(header.getKey(), header.getValue());
     }
     return response;

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author yiyi.su
  * @version 1.0.0
@@ -15,8 +17,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginReq {
+public class LoginReq implements Serializable {
 
+  private static final long serialVersionUID = -6920344874107288634L;
   private String appKey;
 
   private String appSig;

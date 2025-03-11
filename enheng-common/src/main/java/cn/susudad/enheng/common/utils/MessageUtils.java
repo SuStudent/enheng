@@ -17,7 +17,7 @@ public class MessageUtils {
 
   private static SnowFlake snowFlake;
 
-  private final static SerTypeEnum DEFAULT_SER_TYPE = SerTypeEnum.JSON;
+  private final static SerTypeEnum DEFAULT_SER_TYPE = SerTypeEnum.HESSIAN;
 
   private final static byte DEFAULT_VERSION = (byte) 1;
 

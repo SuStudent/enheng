@@ -77,5 +77,11 @@
       <version>2.13.3</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.caucho</groupId>
+      <artifactId>hessian</artifactId>
+      <version>4.0.66</version>
+    </dependency>
+
   </dependencies>
 </project>
