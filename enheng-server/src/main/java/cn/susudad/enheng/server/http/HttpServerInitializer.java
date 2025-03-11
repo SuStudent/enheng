@@ -2,6 +2,7 @@ package cn.susudad.enheng.server.http;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 
@@ -24,6 +25,7 @@ public class HttpServerInitializer extends ChannelInitializer<Channel> {
 //    ch.pipeline().addLast(LoggingHandler.class.getSimpleName(), new LoggingHandler(HttpServer.class, LogLevel.INFO));
     ch.pipeline().addLast(HttpServerCodec.class.getSimpleName(), new HttpServerCodec());
     ch.pipeline().addLast(HttpObjectAggregator.class.getSimpleName(), new HttpObjectAggregator(64 * 1024 * 1024));
+    ch.pipeline().addLast(new HttpContentCompressor());
     ch.pipeline().addLast(httpProcessHandler.getClass().getSimpleName(), httpProcessHandler);
   }
 }
